@@ -17,6 +17,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Lock, User, ArrowLeft } from "lucide-react";
 import OtpVerification from "./OtpVerification";
+import { useFirebase } from "@/hooks/useFirebase";
 
 interface AuthModalProps {
   open?: boolean;
@@ -31,6 +32,7 @@ const AuthModal = ({
   onClose = () => {},
   onAuthenticated = () => {},
 }: AuthModalProps) => {
+  const { signIn, signUp, resetPassword, error: firebaseError } = useFirebase();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,24 +47,17 @@ const AuthModal = ({
 
     try {
       if (mode === "login") {
-        // Simulate login
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        if (email === "demo@numsphere.com" && password === "demo123") {
-          onAuthenticated();
-        } else {
-          setError("Invalid credentials. Try demo@numsphere.com / demo123");
-        }
+        await signIn(email, password);
+        onAuthenticated();
       } else if (mode === "signup") {
-        // Simulate signup with OTP
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setMode("otp");
+        await signUp(email, password, name);
+        onAuthenticated();
       } else if (mode === "forgot") {
-        // Simulate forgot password
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await resetPassword(email);
         setError("Password reset link sent to your email!");
       }
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -180,11 +175,15 @@ const AuthModal = ({
                 </div>
               )}
 
-              {error && (
+              {(error || firebaseError) && (
                 <Alert
-                  variant={error.includes("sent") ? "default" : "destructive"}
+                  variant={
+                    (error || firebaseError)?.includes("sent")
+                      ? "default"
+                      : "destructive"
+                  }
                 >
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{error || firebaseError}</AlertDescription>
                 </Alert>
               )}
 
