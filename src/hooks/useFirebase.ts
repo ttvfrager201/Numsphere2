@@ -76,6 +76,15 @@ export const useFirebase = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!auth) {
+      console.error("Firebase auth not initialized");
+      setError(
+        "Firebase authentication not configured. Please check your environment variables.",
+      );
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
@@ -102,14 +111,22 @@ export const useFirebase = () => {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!auth) {
+      const error = "Firebase authentication not configured";
+      setError(error);
+      throw new Error(error);
+    }
+
     try {
       setError(null);
       const result = await signInWithEmailAndPassword(auth, email, password);
 
       // Update last login
-      await updateDoc(doc(db, "users", result.user.uid), {
-        lastLogin: Timestamp.now(),
-      });
+      if (db) {
+        await updateDoc(doc(db, "users", result.user.uid), {
+          lastLogin: Timestamp.now(),
+        });
+      }
 
       return result;
     } catch (err: any) {
@@ -123,6 +140,12 @@ export const useFirebase = () => {
     password: string,
     displayName: string,
   ) => {
+    if (!auth) {
+      const error = "Firebase authentication not configured";
+      setError(error);
+      throw new Error(error);
+    }
+
     try {
       setError(null);
       const result = await createUserWithEmailAndPassword(
@@ -141,8 +164,10 @@ export const useFirebase = () => {
         lastLogin: Timestamp.now(),
       };
 
-      await setDoc(doc(db, "users", result.user.uid), userProfile);
-      setUserProfile(userProfile);
+      if (db) {
+        await setDoc(doc(db, "users", result.user.uid), userProfile);
+        setUserProfile(userProfile);
+      }
 
       return result;
     } catch (err: any) {
@@ -152,6 +177,12 @@ export const useFirebase = () => {
   };
 
   const resetPassword = async (email: string) => {
+    if (!auth) {
+      const error = "Firebase authentication not configured";
+      setError(error);
+      throw new Error(error);
+    }
+
     try {
       setError(null);
       await sendPasswordResetEmail(auth, email);
