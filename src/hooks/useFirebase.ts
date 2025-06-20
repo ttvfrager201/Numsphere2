@@ -75,6 +75,19 @@ export const useFirebase = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Gumroad integration
+  const verifyGumroadSubscription = async (email: string, name: string) => {
+    try {
+      // This would require your Gumroad API key
+      // For now, returning a mock response
+      console.log("Verifying Gumroad subscription for:", { email, name });
+      return { isValid: true, subscriptionActive: true };
+    } catch (err) {
+      console.error("Gumroad verification failed:", err);
+      return { isValid: false, subscriptionActive: false };
+    }
+  };
+
   useEffect(() => {
     if (!auth) {
       console.error("Firebase auth not initialized");
@@ -121,13 +134,16 @@ export const useFirebase = () => {
       setError(null);
       const result = await signInWithEmailAndPassword(auth, email, password);
 
-      // Update last login
+      // Update last login and load user profile
       if (db) {
         await updateDoc(doc(db, "users", result.user.uid), {
           lastLogin: Timestamp.now(),
         });
+        await loadUserProfile(result.user.uid);
       }
 
+      // Ensure user state is updated
+      setUser(result.user);
       return result;
     } catch (err: any) {
       setError(err.message);
@@ -169,6 +185,8 @@ export const useFirebase = () => {
         setUserProfile(userProfile);
       }
 
+      // Ensure user state is updated
+      setUser(result.user);
       return result;
     } catch (err: any) {
       setError(err.message);
@@ -345,5 +363,6 @@ export const useFirebase = () => {
     addCallRecord,
     getCallRecords,
     updateUserCredits,
+    verifyGumroadSubscription,
   };
 };
