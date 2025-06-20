@@ -32,13 +32,7 @@ const AuthModal = ({
   onClose = () => {},
   onAuthenticated = () => {},
 }: AuthModalProps) => {
-  const {
-    signIn,
-    signUp,
-    resetPassword,
-    error: firebaseError,
-    verifyGumroadSubscription,
-  } = useFirebase();
+  const { signIn, signUp, resetPassword, error: firebaseError } = useFirebase();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,18 +50,6 @@ const AuthModal = ({
         await signIn(email, password);
         onAuthenticated();
       } else if (mode === "signup") {
-        // Verify Gumroad subscription before signup
-        const gumroadVerification = await verifyGumroadSubscription(
-          email,
-          name,
-        );
-        if (!gumroadVerification.isValid) {
-          setError(
-            "Please ensure you have an active Gumroad subscription with matching name and email.",
-          );
-          return;
-        }
-
         await signUp(email, password, name);
         onAuthenticated();
       } else if (mode === "forgot") {
